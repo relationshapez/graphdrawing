@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Euler Draw Tool</title>
+  <style>
+    :root {
+      --gw-blue: #033C5A;
+      --gw-buff: #D6BF91;
+      --white: #FFFFFF;
+      --light-gray: #E6E6E6;
+      --border: #C8D2D8;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--white);
+      color: var(--gw-blue);
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--white);
+    }
+
+    .noscript-message {
+      margin: 16px;
+      padding: 14px 16px;
+      border: 2px solid var(--gw-blue);
+      border-radius: 10px;
+      background: #f8fbfc;
+      color: var(--gw-blue);
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      padding: 10px 10px 0 10px;
+      background: var(--white);
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      background: var(--light-gray);
+      color: var(--gw-blue);
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      margin-right: 6px;
+    }
+
+    .tab-btn.active {
+      background: var(--white);
+      position: relative;
+      top: 1px;
+    }
+
+    .tab-panel {
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 0 10px 10px 10px;
+    }
+
+    .tab-panel.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+    }
+
+    .main-shell, .table-shell {
+      border: 1px solid var(--border);
+      border-radius: 0 10px 10px 10px;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .top-bar.controls-only {
+      justify-content: flex-end;
+      padding-bottom: 6px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+      flex: 0 1 auto;
+    }
+
+    .btn, .radio-pill {
+      appearance: none;
+      border: 1px solid var(--gw-blue);
+      background: var(--white);
+      color: var(--gw-blue);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 42px;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .radio-pill.active {
+      background: var(--gw-buff);
+    }
+
+    .result-label {
+      min-height: 28px;
+      padding: 0 10px 8px 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--gw-blue);
+    }
+
+    .canvas-wrap {
+      flex: 1 1 auto;
+      min-height: 320px;
+      padding: 0 10px 10px 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      display: block;
+      background: var(--white);
+      border: 1px solid var(--gw-blue);
+      border-radius: 2px;
+      touch-action: none;
+    }
+
+    .table-header {
+      padding: 10px 10px 0 10px;
+    }
+
+    .table-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--gw-blue);
+      margin-bottom: 0;
+    }
+
+    .table-wrap {
+      padding: 0 10px 10px 10px;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 420px;
+      color: var(--gw-blue);
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 8px;
+      text-align: center;
+      background: var(--white);
+    }
+
+    th {
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      background: #f9fbfc;
+      z-index: 1;
+    }
+
+    tbody tr.selected-row td {
+      background: var(--gw-buff);
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+
+    @media (max-width: 700px) {
+      .table-title { font-size: 18px; }
+      .result-label { font-size: 18px; }
+      .btn, .radio-pill { font-size: 14px; padding: 10px 10px; }
+      .top-bar { align-items: stretch; }
+      .controls { justify-content: flex-start; }
+      canvas { min-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-message">
+      This tool requires JavaScript to run. Please open it in a web browser with JavaScript enabled.
+    </div>
+  </noscript>
+
+  <div id="app" class="app" hidden>
+    <div class="tabs">
+      <button id="tab-main" class="tab-btn active" type="button">Main</button>
+      <button id="tab-table" class="tab-btn" type="button">Table</button>
+    </div>
+
+    <section id="panel-main" class="tab-panel active">
+      <div class="main-shell">
+        <div class="top-bar controls-only">
+          <div class="controls">
+            <div class="radio-group">
+              <button id="draw-mode-btn" class="radio-pill active" type="button">Draw</button>
+              <button id="trace-mode-btn" class="radio-pill" type="button">Trace</button>
+            </div>
+            <button id="result-btn" class="btn" type="button">Reveal Result</button>
+            <button id="undo-btn" class="btn" type="button">Undo</button>
+            <button id="reset-btn" class="btn" type="button">Reset</button>
+          </div>
+        </div>
+        <div id="result-label" class="result-label"></div>
+        <div class="canvas-wrap">
+          <canvas id="drawing-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-table" class="tab-panel">
+      <div class="table-shell">
+        <div class="table-header">
+          <div class="table-title"></div>
+                  </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint 1</th>
+                <th>Endpoint 2</th>
+                <th>Trace Order</th>
+              </tr>
+            </thead>
+            <tbody id="edge-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      const GW_BLUE = '#033C5A';
+      const GW_BUFF = '#D6BF91';
+      const WHITE = '#FFFFFF';
+      const LIGHT_GRAY = '#E6E6E6';
+
+      const VERTEX_RADIUS = 10;
+      const SNAP_TOL = 14;
+      const START_HIGHLIGHT_RADIUS = 16;
+      const END_HIGHLIGHT_RADIUS = 16;
+      const REACHED_HIGHLIGHT_RADIUS = 16;
+      const GEOM_TOL = 1e-6;
+      const POINT_MERGE_TOL = 10.0;
+      const EDGE_CLICK_TOL = 12;
+      const SELF_INTERSECTION_ARC_TOL = 18;
+      const MIN_POINT_STEP = 2.25;
+      const ENDPOINT_EDGE_SNAP_TOL = VERTEX_RADIUS;
+      const ENDPOINT_INTERSECTION_POS_TOL = Math.max(2.5, VERTEX_RADIUS * 0.6);
+
+      const app = document.getElementById('app');
+      const canvas = document.getElementById('drawing-canvas');
+      const ctx = canvas.getContext('2d');
+      const titleLabel = document.getElementById('title-label');
+      const resultLabel = document.getElementById('result-label');
+      const resultBtn = document.getElementById('result-btn');
+      const undoBtn = document.getElementById('undo-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const drawModeBtn = document.getElementById('draw-mode-btn');
+      const traceModeBtn = document.getElementById('trace-mode-btn');
+      const tabMainBtn = document.getElementById('tab-main');
+      const tabTableBtn = document.getElementById('tab-table');
+      const panelMain = document.getElementById('panel-main');
+      const panelTable = document.getElementById('panel-table');
+      const edgeTableBody = document.getElementById('edge-table-body');
+
+      function vertexLabel(index) {
+        let s = '';
+        let n = index;
+        while (true) {
+          s = String.fromCharCode('A'.charCodeAt(0) + (n % 26)) + s;
+          n = Math.floor(n / 26) - 1;
+          if (n < 0) break;
+        }
+        return s;
+      }
+
+      function dist2(p, q) {
+        return (p.x - q.x) ** 2 + (p.y - q.y) ** 2;
+      }
+
+      function pointClose(p, q, tol = POINT_MERGE_TOL) {
+        return dist2(p, q) <= tol ** 2;
+      }
+
+      function segLen(p, q) {
+        return Math.hypot(q.x - p.x, q.y - p.y);
+      }
+
+      function cross(ax, ay, bx, by) {
+        return ax * by - ay * bx;
+      }
+
+      function segmentIntersection(p1, p2, q1, q2) {
+        const x1 = p1.x, y1 = p1.y;
+        const x2 = p2.x, y2 = p2.y;
+        const x3 = q1.x, y3 = q1.y;
+        const x4 = q2.x, y4 = q2.y;
+        const rx = x2 - x1;
+        const ry = y2 - y1;
+        const sx = x4 - x3;
+        const sy = y4 - y3;
+        const denom = cross(rx, ry, sx, sy);
+        const qpx = x3 - x1;
+        const qpy = y3 - y1;
+        if (Math.abs(denom) < GEOM_TOL) return null;
+        let t = cross(qpx, qpy, sx, sy) / denom;
+        let u = cross(qpx, qpy, rx, ry) / denom;
+        if (-GEOM_TOL <= t && t <= 1 + GEOM_TOL && -GEOM_TOL <= u && u <= 1 + GEOM_TOL) {
+          const ix = x1 + t * rx;
+          const iy = y1 + t * ry;
+          t = Math.max(0.0, Math.min(1.0, t));
+          u = Math.max(0.0, Math.min(1.0, u));
+          return { pt: { x: ix, y: iy }, t, u };
+        }
+        return null;
+      }
+
+      function cumulativeLengths(points) {
+        const cum = [0.0];
+        let total = 0.0;
+        for (let i = 0; i < points.length - 1; i++) {
+          total += segLen(points[i], points[i + 1]);
+          cum.push(total);
+        }
+        return cum;
+      }
+
+      function polylinePosition(cum, segIndex, t) {
+        const segmentLength = cum[segIndex + 1] - cum[segIndex];
+        return cum[segIndex] + t * segmentLength;
+      }
+
+      function dedupeSplitEntries(entries) {
+        if (!entries.length) return [];
+        entries.sort((a, b) => a.pos - b.pos);
+        const result = [entries[0]];
+        for (const entry of entries.slice(1)) {
+          const prev = result[result.length - 1];
+          if (Math.abs(entry.pos - prev.pos) <= 1e-5) {
+            if (entry.pos < prev.pos) prev.pos = entry.pos;
+            if (Object.prototype.hasOwnProperty.call(entry, 'vid')) prev.vid = entry.vid;
+            prev.pt = entry.pt;
+          } else {
+            result.push(entry);
+          }
+        }
+        return result;
+      }
+
+      function polylineSlice(points, cum, startPos, endPos, startPt, endPt) {
+        if (endPos - startPos <= 1e-5) return [startPt, endPt];
+        const out = [startPt];
+        for (let i = 1; i < points.length - 1; i++) {
+          if (startPos + 1e-5 < cum[i] && cum[i] < endPos - 1e-5) {
+            if (!pointClose(out[out.length - 1], points[i], 0.5)) out.push(points[i]);
+          }
+        }
+        if (!pointClose(out[out.length - 1], endPt, 0.5)) out.push(endPt);
+        return out;
+      }
+
+      function pointToSegmentDistance(pt, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        if (Math.abs(dx) < 1e-12 && Math.abs(dy) < 1e-12) return Math.hypot(pt.x - a.x, pt.y - a.y);
+        const t = Math.max(0, Math.min(1, ((pt.x - a.x) * dx + (pt.y - a.y) * dy) / (dx * dx + dy * dy)));
+        const projX = a.x + t * dx;
+        const projY = a.y + t * dy;
+        return Math.hypot(pt.x - projX, pt.y - projY);
+      }
+
+      function closestPointOnSegment(pt, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        if (Math.abs(dx) < 1e-12 && Math.abs(dy) < 1e-12) {
+          return { point: { x: a.x, y: a.y }, t: 0, distance: Math.hypot(pt.x - a.x, pt.y - a.y) };
+        }
+        const t = Math.max(0, Math.min(1, ((pt.x - a.x) * dx + (pt.y - a.y) * dy) / (dx * dx + dy * dy)));
+        const projX = a.x + t * dx;
+        const projY = a.y + t * dy;
+        return { point: { x: projX, y: projY }, t, distance: Math.hypot(pt.x - projX, pt.y - projY) };
+      }
+
+      function snapPointToExistingEdge(pt, excludeVertexIds = new Set()) {
+        let best = null;
+        for (const edge of state.graph.edges) {
+          for (let i = 0; i < edge.points.length - 1; i++) {
+            const a = edge.points[i];
+            const b = edge.points[i + 1];
+            const cand = closestPointOnSegment(pt, a, b);
+            if (cand.distance > ENDPOINT_EDGE_SNAP_TOL) continue;
+            const nearU = pointClose(cand.point, state.graph.vertices[edge.u], POINT_MERGE_TOL);
+            const nearV = pointClose(cand.point, state.graph.vertices[edge.v], POINT_MERGE_TOL);
+            if ((nearU && excludeVertexIds.has(edge.u)) || (nearV && excludeVertexIds.has(edge.v))) continue;
+            if (!best || cand.distance < best.distance) best = cand;
+          }
+        }
+        return best ? best.point : null;
+      }
+
+      class Graph {
+        constructor() {
+          this.vertices = [];
+          this.edges = [];
+        }
+
+        clear() {
+          this.vertices = [];
+          this.edges = [];
+        }
+
+        addOrGetVertex(x, y, tol = SNAP_TOL) {
+          for (let i = 0; i < this.vertices.length; i++) {
+            const v = this.vertices[i];
+            if ((v.x - x) ** 2 + (v.y - y) ** 2 <= tol ** 2) return i;
+          }
+          this.vertices.push({ x, y });
+          return this.vertices.length - 1;
+        }
+
+        findVertex(x, y, tol = SNAP_TOL) {
+          for (let i = 0; i < this.vertices.length; i++) {
+            const v = this.vertices[i];
+            if ((v.x - x) ** 2 + (v.y - y) ** 2 <= tol ** 2) return i;
+          }
+          return null;
+        }
+
+        findVertexPoint(pt, tol = SNAP_TOL) {
+          return this.findVertex(pt.x, pt.y, tol);
+        }
+
+        edgeGeometryKey(u, v, points) {
+          const roundedPath = (path) => path.map(p => [Number(p.x.toFixed(3)), Number(p.y.toFixed(3))]);
+          const forward = JSON.stringify(roundedPath(points));
+          const backward = JSON.stringify(roundedPath([...points].reverse()));
+          const pathKey = forward < backward ? forward : backward;
+          if (u < v) return `${u}|${v}|${pathKey}`;
+          if (u > v) return `${v}|${u}|${pathKey}`;
+          return `${u}|${v}|${pathKey}`;
+        }
+
+        addEdge(u, v, points) {
+          if (points.length < 2) return;
+          let totalLength = 0.0;
+          for (let i = 0; i < points.length - 1; i++) totalLength += segLen(points[i], points[i + 1]);
+          if (totalLength <= 1e-5) return;
+          const newKey = this.edgeGeometryKey(u, v, points);
+          for (const edge of this.edges) {
+            const existingKey = this.edgeGeometryKey(edge.u, edge.v, edge.points);
+            if (existingKey === newKey) return;
+          }
+          this.edges.push({ u, v, points: points.map(p => ({ x: p.x, y: p.y })) });
+        }
+
+        degrees() {
+          const deg = new Array(this.vertices.length).fill(0);
+          for (const edge of this.edges) {
+            const { u, v } = edge;
+            if (u === v) {
+              deg[u] += 2;
+            } else {
+              deg[u] += 1;
+              deg[v] += 1;
+            }
+          }
+          return deg;
+        }
+
+        connectedNonisolated() {
+          if (!this.edges.length) return true;
+          const deg = this.degrees();
+          const nonisolated = new Set();
+          deg.forEach((d, i) => { if (d > 0) nonisolated.add(i); });
+          if (!nonisolated.size) return true;
+          const adj = Array.from({ length: this.vertices.length }, () => new Set());
+          for (const edge of this.edges) {
+            adj[edge.u].add(edge.v);
+            adj[edge.v].add(edge.u);
+          }
+          const start = [...nonisolated][0];
+          const seen = new Set();
+          const stack = [start];
+          while (stack.length) {
+            const node = stack.pop();
+            if (seen.has(node)) continue;
+            seen.add(node);
+            for (const next of adj[node]) if (!seen.has(next)) stack.push(next);
+          }
+          for (const node of nonisolated) if (!seen.has(node)) return false;
+          return true;
+        }
+
+        eulerStatus() {
+          if (!this.edges.length) return 'none';
+          if (!this.connectedNonisolated()) return 'none';
+          const odd = this.degrees().filter(d => d % 2 !== 0).length;
+          if (odd === 0) return 'circuit';
+          if (odd === 2) return 'path';
+          return 'none';
+        }
+      }
+
+      const state = {
+        graph: new Graph(),
+        drawHistory: [],
+        currentPoints: [],
+        resultVisible: false,
+        activeStartVertex: null,
+        activeEndVertex: null,
+        reachedVertices: new Set(),
+        traceEdgeIds: [],
+        mode: 'draw',
+        pointerDown: false,
+        dpr: Math.max(1, window.devicePixelRatio || 1)
+      };
+
+      function setActiveTab(name) {
+        const main = name === 'main';
+        tabMainBtn.classList.toggle('active', main);
+        tabTableBtn.classList.toggle('active', !main);
+        panelMain.classList.toggle('active', main);
+        panelTable.classList.toggle('active', !main);
+        requestAnimationFrame(resizeCanvas);
+      }
+
+      function setMode(mode) {
+        state.mode = mode;
+        drawModeBtn.classList.toggle('active', mode === 'draw');
+        traceModeBtn.classList.toggle('active', mode === 'trace');
+        state.currentPoints = [];
+        state.activeStartVertex = null;
+        state.activeEndVertex = null;
+        state.reachedVertices = new Set();
+        if (mode === 'draw') state.traceEdgeIds = [];
+        updateModeText();
+        updateUndoButtonState();
+        refreshEverything();
+      }
+
+      function updateModeText() {
+        titleLabel.textContent = '';
+      }
+
+      function hideResult() {
+        state.resultVisible = false;
+        resultLabel.textContent = '';
+        resultBtn.textContent = 'Reveal Result';
+      }
+
+      function toggleResult() {
+        if (state.resultVisible) {
+          hideResult();
+          return;
+        }
+        const status = state.graph.eulerStatus();
+        let text = 'There are no Euler paths.';
+        if (status === 'circuit') text = 'There is an Euler circuit!';
+        else if (status === 'path') text = 'There is an Euler path!';
+        resultLabel.textContent = text;
+        resultBtn.textContent = 'Hide Result';
+        state.resultVisible = true;
+      }
+
+      function updateUndoButtonState() {
+        const enabled = state.mode === 'draw' ? state.drawHistory.length > 0 : state.traceEdgeIds.length > 0;
+        undoBtn.disabled = !enabled;
+      }
+
+      function snapshotGraph() {
+        return {
+          vertices: state.graph.vertices.map(v => ({ x: v.x, y: v.y })),
+          edges: state.graph.edges.map(e => ({
+            u: e.u,
+            v: e.v,
+            points: e.points.map(p => ({ x: p.x, y: p.y }))
+          }))
+        };
+      }
+
+      function restoreSnapshot(snapshot) {
+        state.graph.vertices = snapshot.vertices.map(v => ({ x: v.x, y: v.y }));
+        state.graph.edges = snapshot.edges.map(e => ({
+          u: e.u,
+          v: e.v,
+          points: e.points.map(p => ({ x: p.x, y: p.y }))
+        }));
+      }
+
+      function resetGraph() {
+        state.mode = 'draw';
+        state.graph.clear();
+        state.drawHistory = [];
+        state.currentPoints = [];
+        state.traceEdgeIds = [];
+        state.activeStartVertex = null;
+        state.activeEndVertex = null;
+        state.reachedVertices = new Set();
+        hideResult();
+        updateModeText();
+        drawModeBtn.classList.add('active');
+        traceModeBtn.classList.remove('active');
+        updateUndoButtonState();
+        refreshEverything();
+      }
+
+      function undoLast() {
+        if (state.mode === 'trace') {
+          if (!state.traceEdgeIds.length) return;
+          state.traceEdgeIds = state.traceEdgeIds.slice(0, -1);
+          state.currentPoints = [];
+          state.activeStartVertex = null;
+          state.activeEndVertex = null;
+          state.reachedVertices = new Set();
+          hideResult();
+          updateUndoButtonState();
+          refreshEverything();
+          return;
+        }
+        if (!state.drawHistory.length) return;
+        const lastSnapshot = state.drawHistory.pop();
+        restoreSnapshot(lastSnapshot);
+        state.traceEdgeIds = [];
+        state.currentPoints = [];
+        state.activeStartVertex = null;
+        state.activeEndVertex = null;
+        state.reachedVertices = new Set();
+        hideResult();
+        updateUndoButtonState();
+        refreshEverything();
+      }
+
+      function canvasPointFromEvent(ev) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ev.clientX - rect.left,
+          y: ev.clientY - rect.top
+        };
+      }
+
+      function resolveVertexId(pt, pointVertexRefs) {
+        for (const item of pointVertexRefs) {
+          if (pointClose(item.pt, pt)) return item.vid;
+        }
+        const existing = state.graph.findVertexPoint(pt, POINT_MERGE_TOL);
+        if (existing !== null) {
+          pointVertexRefs.push({ pt: state.graph.vertices[existing], vid: existing });
+          return existing;
+        }
+        const vid = state.graph.addOrGetVertex(pt.x, pt.y, POINT_MERGE_TOL);
+        pointVertexRefs.push({ pt: state.graph.vertices[vid], vid });
+        return vid;
+      }
+
+      function simplifyStroke(points) {
+        if (points.length <= 2) return points.map(p => ({ x: p.x, y: p.y }));
+        const out = [{ x: points[0].x, y: points[0].y }];
+        for (let i = 1; i < points.length - 1; i++) {
+          const prevKept = out[out.length - 1];
+          const curr = points[i];
+          const next = points[i + 1];
+          if (segLen(prevKept, curr) < MIN_POINT_STEP) continue;
+          const ax = curr.x - prevKept.x;
+          const ay = curr.y - prevKept.y;
+          const bx = next.x - curr.x;
+          const by = next.y - curr.y;
+          const alen = Math.hypot(ax, ay);
+          const blen = Math.hypot(bx, by);
+          if (alen > 1e-8 && blen > 1e-8) {
+            const dot = (ax * bx + ay * by) / (alen * blen);
+            if (dot > 0.999 && pointToSegmentDistance(curr, prevKept, next) < 0.75) continue;
+          }
+          out.push({ x: curr.x, y: curr.y });
+        }
+        const last = points[points.length - 1];
+        if (!pointClose(out[out.length - 1], last, 0.5)) out.push({ x: last.x, y: last.y });
+        return out;
+      }
+
+      function splitPolylineSelfOnly(points, startVid = null, endVid = null) {
+        const cum = cumulativeLengths(points);
+        const total = cum[cum.length - 1];
+        const pointVertexRefs = [];
+        const entries = [];
+        if (startVid === null) startVid = state.graph.addOrGetVertex(points[0].x, points[0].y, POINT_MERGE_TOL);
+        if (endVid === null) endVid = state.graph.addOrGetVertex(points[points.length - 1].x, points[points.length - 1].y, POINT_MERGE_TOL);
+        pointVertexRefs.push({ pt: state.graph.vertices[startVid], vid: startVid });
+        pointVertexRefs.push({ pt: state.graph.vertices[endVid], vid: endVid });
+        entries.push({ pos: 0.0, pt: state.graph.vertices[startVid], vid: startVid });
+        entries.push({ pos: total, pt: state.graph.vertices[endVid], vid: endVid });
+
+        for (let i = 0; i < points.length - 1; i++) {
+          for (let j = i + 2; j < points.length - 1; j++) {
+            if (i === 0 && j === points.length - 2) continue;
+            const inter = segmentIntersection(points[i], points[i + 1], points[j], points[j + 1]);
+            if (!inter) continue;
+            const pt = inter.pt;
+            if (pointClose(pt, points[0], 1.0) || pointClose(pt, points[points.length - 1], 1.0)) continue;
+            const pos1 = polylinePosition(cum, i, inter.t);
+            const pos2 = polylinePosition(cum, j, inter.u);
+            if (Math.abs(pos2 - pos1) < SELF_INTERSECTION_ARC_TOL) continue;
+            const vid = resolveVertexId(pt, pointVertexRefs);
+            const vpt = state.graph.vertices[vid];
+            entries.push({ pos: pos1, pt: vpt, vid });
+            entries.push({ pos: pos2, pt: vpt, vid });
+          }
+        }
+
+        const deduped = dedupeSplitEntries(entries);
+        const segments = [];
+        for (let i = 0; i < deduped.length - 1; i++) {
+          const a = deduped[i];
+          const b = deduped[i + 1];
+          if (b.pos - a.pos <= 1e-5) continue;
+          const subpoints = polylineSlice(points, cum, a.pos, b.pos, a.pt, b.pt);
+          if (subpoints.length >= 2) segments.push({ u: a.vid, v: b.vid, points: subpoints });
+        }
+        return segments;
+      }
+
+      function splitEdgesForNewStroke(strokePoints) {
+        const oldEdges = state.graph.edges.slice();
+        if (!oldEdges.length) return splitPolylineSelfOnly(strokePoints);
+
+        const strokeCum = cumulativeLengths(strokePoints);
+        const edgeSplitMap = new Map();
+        for (let i = 0; i < oldEdges.length; i++) edgeSplitMap.set(i, []);
+        const strokeSplitEntries = [];
+
+        for (let edgeIndex = 0; edgeIndex < oldEdges.length; edgeIndex++) {
+          const edge = oldEdges[edgeIndex];
+          const edgePoints = edge.points;
+          const edgeCum = cumulativeLengths(edgePoints);
+          for (let ei = 0; ei < edgePoints.length - 1; ei++) {
+            const ep1 = edgePoints[ei], ep2 = edgePoints[ei + 1];
+            for (let si = 0; si < strokePoints.length - 1; si++) {
+              const sp1 = strokePoints[si], sp2 = strokePoints[si + 1];
+              const inter = segmentIntersection(ep1, ep2, sp1, sp2);
+              if (!inter) continue;
+              const edgePos = polylinePosition(edgeCum, ei, inter.t);
+              const strokePos = polylinePosition(strokeCum, si, inter.u);
+              if (strokePos <= ENDPOINT_INTERSECTION_POS_TOL || strokeCum[strokeCum.length - 1] - strokePos <= ENDPOINT_INTERSECTION_POS_TOL) {
+                edgeSplitMap.get(edgeIndex).push({ pos: edgePos, pt: inter.pt });
+                continue;
+              }
+              edgeSplitMap.get(edgeIndex).push({ pos: edgePos, pt: inter.pt });
+              strokeSplitEntries.push({ pos: strokePos, pt: inter.pt });
+            }
+          }
+        }
+
+        for (let i = 0; i < strokePoints.length - 1; i++) {
+          for (let j = i + 2; j < strokePoints.length - 1; j++) {
+            if (i === 0 && j === strokePoints.length - 2) continue;
+            const inter = segmentIntersection(strokePoints[i], strokePoints[i + 1], strokePoints[j], strokePoints[j + 1]);
+            if (!inter) continue;
+            const pt = inter.pt;
+            if (pointClose(pt, strokePoints[0], 1.0) || pointClose(pt, strokePoints[strokePoints.length - 1], 1.0)) continue;
+            const pos1 = polylinePosition(strokeCum, i, inter.t);
+            const pos2 = polylinePosition(strokeCum, j, inter.u);
+            strokeSplitEntries.push({ pos: pos1, pt });
+            strokeSplitEntries.push({ pos: pos2, pt });
+          }
+        }
+
+        const pointVertexRefs = [];
+        const rebuiltExisting = [];
+        for (let edgeIndex = 0; edgeIndex < oldEdges.length; edgeIndex++) {
+          const edge = oldEdges[edgeIndex];
+          const edgePoints = edge.points;
+          const edgeCum = cumulativeLengths(edgePoints);
+          const total = edgeCum[edgeCum.length - 1];
+          const entries = [
+            { pos: 0.0, pt: edgePoints[0], vid: edge.u },
+            { pos: total, pt: edgePoints[edgePoints.length - 1], vid: edge.v }
+          ];
+          for (const item of edgeSplitMap.get(edgeIndex)) {
+            const vid = resolveVertexId(item.pt, pointVertexRefs);
+            entries.push({ pos: item.pos, pt: state.graph.vertices[vid], vid });
+          }
+          const deduped = dedupeSplitEntries(entries);
+          for (let i = 0; i < deduped.length - 1; i++) {
+            const a = deduped[i], b = deduped[i + 1];
+            if (b.pos - a.pos <= 1e-5) continue;
+            const subpoints = polylineSlice(edgePoints, edgeCum, a.pos, b.pos, a.pt, b.pt);
+            if (subpoints.length >= 2) rebuiltExisting.push({ u: a.vid, v: b.vid, points: subpoints });
+          }
+        }
+
+        const strokeTotal = strokeCum[strokeCum.length - 1];
+        const startVid = resolveVertexId(strokePoints[0], pointVertexRefs);
+        const endVid = resolveVertexId(strokePoints[strokePoints.length - 1], pointVertexRefs);
+        const strokeEntries = [
+          { pos: 0.0, pt: state.graph.vertices[startVid], vid: startVid },
+          { pos: strokeTotal, pt: state.graph.vertices[endVid], vid: endVid }
+        ];
+        for (const item of strokeSplitEntries) {
+          const vid = resolveVertexId(item.pt, pointVertexRefs);
+          strokeEntries.push({ pos: item.pos, pt: state.graph.vertices[vid], vid });
+        }
+        const dedupedStroke = dedupeSplitEntries(strokeEntries);
+        const newSegments = [];
+        for (let i = 0; i < dedupedStroke.length - 1; i++) {
+          const a = dedupedStroke[i], b = dedupedStroke[i + 1];
+          if (b.pos - a.pos <= 1e-5) continue;
+          const subpoints = polylineSlice(strokePoints, strokeCum, a.pos, b.pos, a.pt, b.pt);
+          if (subpoints.length >= 2) newSegments.push({ u: a.vid, v: b.vid, points: subpoints });
+        }
+        return rebuiltExisting.concat(newSegments);
+      }
+
+      function traceEndpoints() {
+        if (!state.traceEdgeIds.length) return new Set();
+        const first = state.graph.edges[state.traceEdgeIds[0]];
+        const current = new Set([first.u, first.v]);
+        for (const edgeIndex of state.traceEdgeIds.slice(1)) {
+          const edge = state.graph.edges[edgeIndex];
+          const u = edge.u, v = edge.v;
+          if (current.has(u) && current.has(v)) {
+            if (u !== v) {
+              current.delete(u);
+              current.delete(v);
+            }
+          } else if (current.has(u)) {
+            current.delete(u);
+            current.add(v);
+          } else if (current.has(v)) {
+            current.delete(v);
+            current.add(u);
+          } else {
+            return new Set();
+          }
+        }
+        return current;
+      }
+
+      function isValidNextTraceEdge(edgeIndex) {
+        if (state.traceEdgeIds.includes(edgeIndex)) return false;
+        if (!state.traceEdgeIds.length) return true;
+        const edge = state.graph.edges[edgeIndex];
+        const lastEdge = state.graph.edges[state.traceEdgeIds[state.traceEdgeIds.length - 1]];
+        return edge.u === lastEdge.u || edge.u === lastEdge.v || edge.v === lastEdge.u || edge.v === lastEdge.v;
+      }
+
+      function toggleTraceEdge(edgeIndex) {
+        const pos = state.traceEdgeIds.indexOf(edgeIndex);
+        if (pos !== -1) {
+          state.traceEdgeIds = state.traceEdgeIds.slice(0, pos);
+        } else {
+          if (!isValidNextTraceEdge(edgeIndex)) return;
+          state.traceEdgeIds.push(edgeIndex);
+        }
+        refreshEverything();
+      }
+
+      function edgeIndexAtPoint(pt) {
+        for (let i = state.graph.edges.length - 1; i >= 0; i--) {
+          const edge = state.graph.edges[i];
+          for (let j = 0; j < edge.points.length - 1; j++) {
+            if (pointToSegmentDistance(pt, edge.points[j], edge.points[j + 1]) <= EDGE_CLICK_TOL) return i;
+          }
+        }
+        return null;
+      }
+
+      function onDrawStart(pt) {
+        if (state.mode !== 'draw') return;
+        hideResult();
+        state.activeStartVertex = null;
+        state.activeEndVertex = null;
+        state.reachedVertices = new Set();
+        state.currentPoints = [];
+        redrawCanvas();
+        if (!state.graph.edges.length && !state.graph.vertices.length) {
+          state.currentPoints = [pt];
+          return;
+        }
+        const startVertex = state.graph.findVertex(pt.x, pt.y);
+        if (startVertex === null) return;
+        state.activeStartVertex = startVertex;
+        state.reachedVertices.add(startVertex);
+        const v = state.graph.vertices[startVertex];
+        state.currentPoints = [{ x: v.x, y: v.y }];
+        redrawCanvas();
+      }
+
+      function onDrawMove(pt) {
+        if (state.mode !== 'draw') return;
+        if (!state.currentPoints.length) return;
+        const last = state.currentPoints[state.currentPoints.length - 1];
+        if (segLen(last, pt) < 0.75) return;
+        state.currentPoints.push(pt);
+        const endVertex = state.graph.findVertex(pt.x, pt.y);
+        if (endVertex !== null) {
+          state.activeEndVertex = endVertex;
+          state.reachedVertices.add(endVertex);
+        } else {
+          state.activeEndVertex = null;
+        }
+        redrawCanvas();
+      }
+
+      function onDrawEnd() {
+        if (state.mode !== 'draw') return;
+        if (state.currentPoints.length < 2) {
+          state.currentPoints = [];
+          state.activeStartVertex = null;
+          state.activeEndVertex = null;
+          state.reachedVertices = new Set();
+          redrawCanvas();
+          return;
+        }
+
+        const snapshot = snapshotGraph();
+
+        if (!state.graph.edges.length && !state.graph.vertices.length) {
+          const points = simplifyStroke(state.currentPoints.map(p => ({ x: p.x, y: p.y })));
+          const segments = splitPolylineSelfOnly(points, null, null);
+          state.graph.edges = [];
+          for (const edge of segments) state.graph.addEdge(edge.u, edge.v, edge.points);
+        } else {
+          if (state.activeStartVertex === null) {
+            state.currentPoints = [];
+            state.activeEndVertex = null;
+            state.reachedVertices = new Set();
+            redrawCanvas();
+            return;
+          }
+          const u = state.activeStartVertex;
+          let endPt = state.currentPoints[state.currentPoints.length - 1];
+          let foundEnd = state.graph.findVertex(endPt.x, endPt.y);
+          if (foundEnd === null) {
+            const snapPt = snapPointToExistingEdge(endPt, new Set([u]));
+            if (snapPt) {
+              endPt = snapPt;
+              state.currentPoints[state.currentPoints.length - 1] = { x: snapPt.x, y: snapPt.y };
+              foundEnd = state.graph.findVertex(endPt.x, endPt.y, POINT_MERGE_TOL);
+            }
+          }
+          const v = foundEnd === null ? state.graph.addOrGetVertex(endPt.x, endPt.y, POINT_MERGE_TOL) : foundEnd;
+          const strokePoints = simplifyStroke(state.currentPoints.map(p => ({ x: p.x, y: p.y })));
+          strokePoints[0] = { ...state.graph.vertices[u] };
+          strokePoints[strokePoints.length - 1] = { ...state.graph.vertices[v] };
+          const rebuilt = splitEdgesForNewStroke(strokePoints);
+          state.graph.edges = [];
+          for (const edge of rebuilt) state.graph.addEdge(edge.u, edge.v, edge.points);
+        }
+
+        state.drawHistory.push(snapshot);
+        state.currentPoints = [];
+        state.activeStartVertex = null;
+        state.activeEndVertex = null;
+        state.reachedVertices = new Set();
+        state.traceEdgeIds = [];
+        hideResult();
+        updateUndoButtonState();
+        refreshEverything();
+      }
+
+      function drawCircle(x, y, r, strokeStyle, lineWidth, fillStyle = null, dashed = false) {
+        ctx.save();
+        ctx.beginPath();
+        if (dashed) ctx.setLineDash([4, 2]);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        if (fillStyle) {
+          ctx.fillStyle = fillStyle;
+          ctx.fill();
+        }
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = strokeStyle;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPolyline(points, color, width) {
+        if (points.length < 2) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function redrawCanvas() {
+        ctx.clearRect(0, 0, canvas.width / state.dpr, canvas.height / state.dpr);
+
+        for (let edgeIndex = 0; edgeIndex < state.graph.edges.length; edgeIndex++) {
+          const edge = state.graph.edges[edgeIndex];
+          const selected = state.traceEdgeIds.includes(edgeIndex);
+          drawPolyline(edge.points, selected ? GW_BUFF : GW_BLUE, selected ? 5 : 3);
+        }
+
+        for (let i = 0; i < state.graph.vertices.length; i++) {
+          const v = state.graph.vertices[i];
+          if (state.reachedVertices.has(i)) drawCircle(v.x, v.y, REACHED_HIGHLIGHT_RADIUS, GW_BUFF, 3);
+          if (i === state.activeEndVertex) drawCircle(v.x, v.y, END_HIGHLIGHT_RADIUS, GW_BUFF, 3, null, true);
+          drawCircle(v.x, v.y, VERTEX_RADIUS, GW_BLUE, 2, GW_BUFF);
+          ctx.save();
+          ctx.fillStyle = GW_BLUE;
+          ctx.font = 'bold 11px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(vertexLabel(i), v.x, v.y);
+          ctx.restore();
+        }
+
+        if (state.currentPoints.length >= 2) drawPolyline(state.currentPoints, GW_BLUE, 3);
+      }
+
+      function refreshTable() {
+        edgeTableBody.innerHTML = '';
+        const deg = state.graph.degrees();
+        for (let i = 0; i < state.graph.edges.length; i++) {
+          const edge = state.graph.edges[i];
+          const tr = document.createElement('tr');
+          if (state.traceEdgeIds.includes(i)) tr.classList.add('selected-row');
+          const left = `${vertexLabel(edge.u)}(${deg[edge.u] || 0})`;
+          const right = `${vertexLabel(edge.v)}(${deg[edge.v] || 0})`;
+          const orderIndex = state.traceEdgeIds.indexOf(i);
+          const order = orderIndex === -1 ? '' : String(orderIndex + 1);
+          tr.innerHTML = `<td>${left}</td><td>${right}</td><td>${order}</td>`;
+          tr.addEventListener('click', () => {
+            if (state.mode !== 'trace') setMode('trace');
+            toggleTraceEdge(i);
+          });
+          edgeTableBody.appendChild(tr);
+        }
+      }
+
+      function refreshEverything() {
+        redrawCanvas();
+        refreshTable();
+      }
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(10, Math.round(rect.width));
+        const height = Math.max(10, Math.round(rect.height));
+        state.dpr = Math.max(1, window.devicePixelRatio || 1);
+        canvas.width = Math.round(width * state.dpr);
+        canvas.height = Math.round(height * state.dpr);
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        redrawCanvas();
+      }
+
+      function handlePointerDown(ev) {
+        ev.preventDefault();
+        const pt = canvasPointFromEvent(ev);
+        state.pointerDown = true;
+        canvas.setPointerCapture?.(ev.pointerId);
+        if (state.mode === 'trace') {
+          const edgeIndex = edgeIndexAtPoint(pt);
+          if (edgeIndex !== null) toggleTraceEdge(edgeIndex);
+          return;
+        }
+        onDrawStart(pt);
+      }
+
+      function handlePointerMove(ev) {
+        if (!state.pointerDown) return;
+        if (state.mode !== 'draw') return;
+        ev.preventDefault();
+        const pt = canvasPointFromEvent(ev);
+        onDrawMove(pt);
+      }
+
+      function handlePointerUp(ev) {
+        if (!state.pointerDown) return;
+        state.pointerDown = false;
+        if (state.mode === 'draw') onDrawEnd();
+        canvas.releasePointerCapture?.(ev.pointerId);
+      }
+
+      drawModeBtn.addEventListener('click', () => setMode('draw'));
+      traceModeBtn.addEventListener('click', () => setMode('trace'));
+      resultBtn.addEventListener('click', toggleResult);
+      undoBtn.addEventListener('click', undoLast);
+      resetBtn.addEventListener('click', resetGraph);
+      tabMainBtn.addEventListener('click', () => setActiveTab('main'));
+      tabTableBtn.addEventListener('click', () => setActiveTab('table'));
+      canvas.addEventListener('pointerdown', handlePointerDown);
+      canvas.addEventListener('pointermove', handlePointerMove);
+      canvas.addEventListener('pointerup', handlePointerUp);
+      canvas.addEventListener('pointercancel', handlePointerUp);
+      window.addEventListener('resize', resizeCanvas);
+
+      app.hidden = false;
+      updateModeText();
+      updateUndoButtonState();
+      refreshTable();
+      requestAnimationFrame(resizeCanvas);
+    })();
+  </script>
+</body>
+</html>
