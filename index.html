@@ -894,12 +894,49 @@
         return current;
       }
 
+      function inferTracePathEnd() {
+        if (!state.traceEdgeIds.length) return null;
+        if (state.traceEdgeIds.length === 1) return null;
+
+        const first = state.graph.edges[state.traceEdgeIds[0]];
+        const second = state.graph.edges[state.traceEdgeIds[1]];
+        let shared = null;
+        if (first.u === second.u || first.u === second.v) shared = first.u;
+        else if (first.v === second.u || first.v === second.v) shared = first.v;
+        if (shared === null) return undefined;
+
+        let currentEnd;
+        if (first.u === shared && first.v === shared) {
+          currentEnd = shared;
+        } else {
+          currentEnd = (second.u === shared && second.v === shared)
+            ? shared
+            : (second.u === shared ? second.v : second.u);
+        }
+
+        for (let i = 2; i < state.traceEdgeIds.length; i++) {
+          const edge = state.graph.edges[state.traceEdgeIds[i]];
+          const touchesU = edge.u === currentEnd;
+          const touchesV = edge.v === currentEnd;
+          if (!touchesU && !touchesV) return undefined;
+          currentEnd = touchesU && touchesV ? currentEnd : (touchesU ? edge.v : edge.u);
+        }
+        return currentEnd;
+      }
+
       function isValidNextTraceEdge(edgeIndex) {
         if (state.traceEdgeIds.includes(edgeIndex)) return false;
         if (!state.traceEdgeIds.length) return true;
         const edge = state.graph.edges[edgeIndex];
-        const lastEdge = state.graph.edges[state.traceEdgeIds[state.traceEdgeIds.length - 1]];
-        return edge.u === lastEdge.u || edge.u === lastEdge.v || edge.v === lastEdge.u || edge.v === lastEdge.v;
+
+        if (state.traceEdgeIds.length === 1) {
+          const first = state.graph.edges[state.traceEdgeIds[0]];
+          return edge.u === first.u || edge.u === first.v || edge.v === first.u || edge.v === first.v;
+        }
+
+        const currentEnd = inferTracePathEnd();
+        if (currentEnd === undefined) return false;
+        return edge.u === currentEnd || edge.v === currentEnd;
       }
 
       function toggleTraceEdge(edgeIndex) {
