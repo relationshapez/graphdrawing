@@ -599,7 +599,7 @@
       }
 
       function updateModeText() {
-        titleLabel.textContent = '';
+        if (titleLabel) titleLabel.textContent = '';
       }
 
       function hideResult() {
