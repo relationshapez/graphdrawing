@@ -894,34 +894,55 @@
         return current;
       }
 
-      function inferTracePathEnd() {
-        if (!state.traceEdgeIds.length) return null;
-        if (state.traceEdgeIds.length === 1) return null;
+      function inferTraceDirectedState() {
+        if (!state.traceEdgeIds.length) return { status: 'empty' };
+        if (state.traceEdgeIds.length === 1) return { status: 'single' };
 
         const first = state.graph.edges[state.traceEdgeIds[0]];
         const second = state.graph.edges[state.traceEdgeIds[1]];
-        let shared = null;
-        if (first.u === second.u || first.u === second.v) shared = first.u;
-        else if (first.v === second.u || first.v === second.v) shared = first.v;
-        if (shared === null) return undefined;
+        const firstOptions = [
+          [first.u, first.v],
+          [first.v, first.u]
+        ];
 
-        let currentEnd;
-        if (first.u === shared && first.v === shared) {
-          currentEnd = shared;
-        } else {
-          currentEnd = (second.u === shared && second.v === shared)
-            ? shared
-            : (second.u === shared ? second.v : second.u);
+        let vertices = null;
+        for (const option of firstOptions) {
+          const [start, end] = option;
+          if (second.u === end && second.v === end) {
+            vertices = [start, end, end];
+            break;
+          }
+          if (second.u === end) {
+            vertices = [start, end, second.v];
+            break;
+          }
+          if (second.v === end) {
+            vertices = [start, end, second.u];
+            break;
+          }
         }
+        if (!vertices) return { status: 'invalid' };
 
         for (let i = 2; i < state.traceEdgeIds.length; i++) {
           const edge = state.graph.edges[state.traceEdgeIds[i]];
-          const touchesU = edge.u === currentEnd;
-          const touchesV = edge.v === currentEnd;
-          if (!touchesU && !touchesV) return undefined;
-          currentEnd = touchesU && touchesV ? currentEnd : (touchesU ? edge.v : edge.u);
+          const terminal = vertices[vertices.length - 1];
+          if (edge.u === terminal && edge.v === terminal) {
+            vertices.push(terminal);
+          } else if (edge.u === terminal) {
+            vertices.push(edge.v);
+          } else if (edge.v === terminal) {
+            vertices.push(edge.u);
+          } else {
+            return { status: 'invalid' };
+          }
         }
-        return currentEnd;
+
+        return {
+          status: 'oriented',
+          start: vertices[0],
+          terminal: vertices[vertices.length - 1],
+          vertices
+        };
       }
 
       function isValidNextTraceEdge(edgeIndex) {
@@ -934,9 +955,10 @@
           return edge.u === first.u || edge.u === first.v || edge.v === first.u || edge.v === first.v;
         }
 
-        const currentEnd = inferTracePathEnd();
-        if (currentEnd === undefined) return false;
-        return edge.u === currentEnd || edge.v === currentEnd;
+        const directedState = inferTraceDirectedState();
+        if (directedState.status !== 'oriented') return false;
+        const terminal = directedState.terminal;
+        return edge.u === terminal || edge.v === terminal;
       }
 
       function toggleTraceEdge(edgeIndex) {
