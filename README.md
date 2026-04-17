@@ -121,7 +121,7 @@ Some effective uses include:
 
 ## File overview
 
-- `graph_drawing.html` — the main interactive browser tool.
+- `index.html` — the main interactive browser tool.
 - `README.md` — repository overview and usage guide.
 - `LICENSE` — MIT license text.
 
